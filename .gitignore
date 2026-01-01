@@ -1,0 +1,45 @@
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/.idea/
+android/local.properties
+android/*.iml
+android/app/*.iml
+*.iml
+.gradle/
+local.properties
+
+# Backend
+workspace/backend/target/
+workspace/backend/.classpath
+workspace/backend/.project
+workspace/backend/.settings/
+workspace/backend/.idea/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Database
+*.db
+*.sqlite
+
+# Environment variables
+.env
+*.env
+
+# Temporary files
+*.tmp
+*.temp
+

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TravelPath - Schéma Base de Données</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #333;
+        }
+
+        .database-diagram {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            position: relative;
+        }
+
+        .table {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .table-body {
+            padding: 0;
+        }
+
+        .field {
+            padding: 8px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .field:last-child {
+            border-bottom: none;
+        }
+
+        .field-primary {
+            background: #fff5f5;
+            font-weight: 600;
+        }
+
+        .field-foreign {
+            background: #f0f8ff;
+            font-style: italic;
+        }
+
+        .field-key {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .field-type {
+            color: #999;
+            font-size: 11px;
+            margin-left: auto;
+        }
+
+        .divider {
+            height: 2px;
+            background: #e0e0e0;
+            margin: 5px 0;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 40px 0 20px 0;
+            color: #333;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .legend {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-primary {
+            background: #fff5f5;
+            border: 2px solid #667eea;
+        }
+
+        .legend-foreign {
+            background: #f0f8ff;
+            border: 2px solid #4a90e2;
+        }
+
+        .legend-normal {
+            background: white;
+            border: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TravelPath - Schéma de Base de Données</h1>
+
+        <div class="legend">
+            <h3 style="margin-bottom: 15px;">Légende</h3>
+            <div class="legend-item">
+                <div class="legend-color legend-primary"></div>
+                <span>Clé primaire (PK)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-foreign"></div>
+                <span>Clé étrangère (FK)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-normal"></div>
+                <span>Attribut normal</span>
+            </div>
+        </div>
+
+        <div class="section-title">Tables Principales</div>
+        <div class="database-diagram">
+            <!-- Utilisateurs -->
+            <div class="table">
+                <div class="table-header">utilisateurs</div>
+                <div class="table-body">
+                    <div class="field field-primary">
+                        <span class="field-key">PK</span>
+                        <span>id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="field">nom <span class="field-type">VARCHAR(100)</span></div>
+                    <div class="field">email <span class="field-type">VARCHAR(255)</span></div>
+                    <div class="field">date_creation <span class="field-type">TIMESTAMP</span></div>
+                    <div class="field">date_modification <span class="field-type">TIMESTAMP</span></div>
+                </div>
+            </div>
+
+            <!-- Profils -->
+            <div class="table">
+                <div class="table-header">profils</div>
+                <div class="table-body">
+                    <div class="field field-primary">
+                        <span class="field-key">PK</span>
+                        <span>id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="field field-foreign">
+                        <span class="field-key">FK</span>
+                        <span>utilisateur_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field">nom <span class="field-type">VARCHAR(100)</span></div>
+                    <div class="field">type_profil <span class="field-type">ENUM</span></div>
+                    <div class="field">date_creation <span class="field-type">TIMESTAMP</span></div>
+                </div>
+            </div>
+
+            <!-- Preferences -->
+            <div class="table">
+                <div class="table-header">preferences</div>
+                <div class="table-body">
+                    <div class="field field-primary">
+                        <span class="field-key">PK</span>
+                        <span>id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="field field-foreign">
+                        <span class="field-key">FK</span>
+                        <span>profil_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field">budget_max <span class="field-type">DECIMAL(10,2)</span></div>
+                    <div class="field">duree <span class="field-type">INT</span></div>
+                    <div class="field">niveau_effort <span class="field-type">ENUM</span></div>
+                    <div class="field">sensibilite_froid <span class="field-type">INT</span></div>
+                    <div class="field">sensibilite_chaleur <span class="field-type">INT</span></div>
+                    <div class="field">sensibilite_humidite <span class="field-type">INT</span></div>
+                    <div class="field">date_creation <span class="field-type">TIMESTAMP</span></div>
+                </div>
+            </div>
+
+            <!-- Preferences Activites -->
+            <div class="table">
+                <div class="table-header">preferences_activites</div>
+                <div class="table-body">
+                    <div class="field field-primary field-foreign">
+                        <span class="field-key">PK, FK</span>
+                        <span>preference_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field field-primary">
+                        <span class="field-key">PK</span>
+                        <span>activite</span>
+                        <span class="field-type">ENUM</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lieux -->
+            <div class="table">
+                <div class="table-header">lieux</div>
+                <div class="table-body">
+                    <div class="field field-primary">
+                        <span class="field-key">PK</span>
+                        <span>id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="field">nom <span class="field-type">VARCHAR(255)</span></div>
+                    <div class="field">categorie <span class="field-type">ENUM</span></div>
+                    <div class="field">latitude <span class="field-type">DECIMAL(10,8)</span></div>
+                    <div class="field">longitude <span class="field-type">DECIMAL(11,8)</span></div>
+                    <div class="field">adresse <span class="field-type">TEXT</span></div>
+                    <div class="field">description <span class="field-type">TEXT</span></div>
+                    <div class="field">cout_moyen <span class="field-type">DECIMAL(10,2)</span></div>
+                    <div class="field">impact_froid <span class="field-type">INT</span></div>
+                    <div class="field">impact_chaleur <span class="field-type">INT</span></div>
+                    <div class="field">impact_humidite <span class="field-type">INT</span></div>
+                    <div class="field">temps_attente_estime <span class="field-type">INT</span></div>
+                    <div class="field">date_creation <span class="field-type">TIMESTAMP</span></div>
+                    <div class="field">date_modification <span class="field-type">TIMESTAMP</span></div>
+                </div>
+            </div>
+
+            <!-- Horaires Ouverture -->
+            <div class="table">
+                <div class="table-header">horaires_ouverture</div>
+                <div class="table-body">
+                    <div class="field field-primary field-foreign">
+                        <span class="field-key">PK, FK</span>
+                        <span>lieu_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="field">lundi_ouverture <span class="field-type">TIME</span></div>
+                    <div class="field">lundi_fermeture <span class="field-type">TIME</span></div>
+                    <div class="field">mardi_ouverture <span class="field-type">TIME</span></div>
+                    <div class="field">mardi_fermeture <span class="field-type">TIME</span></div>
+                    <div class="field">mercredi_ouverture <span class="field-type">TIME</span></div>
+                    <div class="field">mercredi_fermeture <span class="field-type">TIME</span></div>
+                    <div class="field">jeudi_ouverture <span class="field-type">TIME</span></div>
+                    <div class="field">jeudi_fermeture <span class="field-type">TIME</span></div>
+                    <div class="field">vendrediOuverture <span class="field-type">TIME</span></div>
+                    <div class="field">vendredi_fermeture <span class="field-type">TIME</span></div>
+                    <div class="field">samedi_ouverture <span class="field-type">TIME</span></div>
+                    <div class="field">samedi_fermeture <span class="field-type">TIME</span></div>
+                    <div class="field">dimanche_ouverture <span class="field-type">TIME</span></div>
+                    <div class="field">dimanche_fermeture <span class="field-type">TIME</span></div>
+                </div>
+            </div>
+
+            <!-- Preferences Lieux Obligatoires -->
+            <div class="table">
+                <div class="table-header">preferences_lieux_obligatoires</div>
+                <div class="table-body">
+                    <div class="field field-primary field-foreign">
+                        <span class="field-key">PK, FK</span>
+                        <span>preference_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field field-primary field-foreign">
+                        <span class="field-key">PK, FK</span>
+                        <span>lieu_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Parcours -->
+            <div class="table">
+                <div class="table-header">parcours</div>
+                <div class="table-body">
+                    <div class="field field-primary">
+                        <span class="field-key">PK</span>
+                        <span>id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="field field-foreign">
+                        <span class="field-key">FK</span>
+                        <span>utilisateur_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field">nom <span class="field-type">VARCHAR(255)</span></div>
+                    <div class="field">type_parcours <span class="field-type">ENUM</span></div>
+                    <div class="field">budget_total <span class="field-type">DECIMAL(10,2)</span></div>
+                    <div class="field">duree_totale <span class="field-type">INT</span></div>
+                    <div class="field">niveau_effort <span class="field-type">ENUM</span></div>
+                    <div class="field">ville <span class="field-type">VARCHAR(100)</span></div>
+                    <div class="field">date_creation <span class="field-type">TIMESTAMP</span></div>
+                    <div class="field">date_modification <span class="field-type">TIMESTAMP</span></div>
+                    <div class="field">est_sauvegarde <span class="field-type">BOOLEAN</span></div>
+                    <div class="field">est_favori <span class="field-type">BOOLEAN</span></div>
+                </div>
+            </div>
+
+            <!-- Etapes -->
+            <div class="table">
+                <div class="table-header">etapes</div>
+                <div class="table-body">
+                    <div class="field field-primary">
+                        <span class="field-key">PK</span>
+                        <span>id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="field field-foreign">
+                        <span class="field-key">FK</span>
+                        <span>parcours_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field field-foreign">
+                        <span class="field-key">FK</span>
+                        <span>lieu_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field">ordre <span class="field-type">INT</span></div>
+                    <div class="field">creneau <span class="field-type">ENUM</span></div>
+                    <div class="field">duree_estimee <span class="field-type">INT</span></div>
+                    <div class="field">distance_precedente <span class="field-type">DECIMAL(10,2)</span></div>
+                    <div class="field">cout <span class="field-type">DECIMAL(10,2)</span></div>
+                    <div class="field">notes <span class="field-type">TEXT</span></div>
+                </div>
+            </div>
+
+            <!-- Medias -->
+            <div class="table">
+                <div class="table-header">medias</div>
+                <div class="table-body">
+                    <div class="field field-primary">
+                        <span class="field-key">PK</span>
+                        <span>id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="field">type_media <span class="field-type">ENUM</span></div>
+                    <div class="field">url <span class="field-type">TEXT</span></div>
+                    <div class="field">url_miniature <span class="field-type">TEXT</span></div>
+                    <div class="field">est_en_cache <span class="field-type">BOOLEAN</span></div>
+                    <div class="field">chemin_cache <span class="field-type">VARCHAR(500)</span></div>
+                    <div class="field">date_creation <span class="field-type">TIMESTAMP</span></div>
+                </div>
+            </div>
+
+            <!-- Lieux Medias -->
+            <div class="table">
+                <div class="table-header">lieux_medias</div>
+                <div class="table-body">
+                    <div class="field field-primary field-foreign">
+                        <span class="field-key">PK, FK</span>
+                        <span>lieu_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field field-primary field-foreign">
+                        <span class="field-key">PK, FK</span>
+                        <span>media_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field">ordre <span class="field-type">INT</span></div>
+                </div>
+            </div>
+
+            <!-- Etapes Medias -->
+            <div class="table">
+                <div class="table-header">etapes_medias</div>
+                <div class="table-body">
+                    <div class="field field-primary field-foreign">
+                        <span class="field-key">PK, FK</span>
+                        <span>etape_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field field-primary field-foreign">
+                        <span class="field-key">PK, FK</span>
+                        <span>media_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field">ordre <span class="field-type">INT</span></div>
+                </div>
+            </div>
+
+            <!-- Historique Navigation -->
+            <div class="table">
+                <div class="table-header">historique_navigation</div>
+                <div class="table-body">
+                    <div class="field field-primary">
+                        <span class="field-key">PK</span>
+                        <span>id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="field field-foreign">
+                        <span class="field-key">FK</span>
+                        <span>utilisateur_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field field-foreign">
+                        <span class="field-key">FK</span>
+                        <span>parcours_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field field-foreign">
+                        <span class="field-key">FK</span>
+                        <span>etape_actuelle_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field">date_debut <span class="field-type">TIMESTAMP</span></div>
+                    <div class="field">date_fin <span class="field-type">TIMESTAMP</span></div>
+                    <div class="field">est_termine <span class="field-type">BOOLEAN</span></div>
+                </div>
+            </div>
+
+            <!-- Cache Hors Ligne -->
+            <div class="table">
+                <div class="table-header">cache_hors_ligne</div>
+                <div class="table-body">
+                    <div class="field field-primary">
+                        <span class="field-key">PK</span>
+                        <span>id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="field field-foreign">
+                        <span class="field-key">FK</span>
+                        <span>utilisateur_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field">type_contenu <span class="field-type">ENUM</span></div>
+                    <div class="field">contenu_id <span class="field-type">VARCHAR(36)</span></div>
+                    <div class="field">donnees_cache <span class="field-type">TEXT</span></div>
+                    <div class="field">date_mise_en_cache <span class="field-type">TIMESTAMP</span></div>
+                    <div class="field">date_expiration <span class="field-type">TIMESTAMP</span></div>
+                </div>
+            </div>
+
+            <!-- Evaluations Parcours -->
+            <div class="table">
+                <div class="table-header">evaluations_parcours</div>
+                <div class="table-body">
+                    <div class="field field-primary">
+                        <span class="field-key">PK</span>
+                        <span>id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="field field-foreign">
+                        <span class="field-key">FK</span>
+                        <span>utilisateur_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field field-foreign">
+                        <span class="field-key">FK</span>
+                        <span>parcours_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field">evaluation <span class="field-type">ENUM</span></div>
+                    <div class="field">date_evaluation <span class="field-type">TIMESTAMP</span></div>
+                </div>
+            </div>
+
+            <!-- Partages Parcours -->
+            <div class="table">
+                <div class="table-header">partages_parcours</div>
+                <div class="table-body">
+                    <div class="field field-primary">
+                        <span class="field-key">PK</span>
+                        <span>id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="field field-foreign">
+                        <span class="field-key">FK</span>
+                        <span>parcours_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field field-foreign">
+                        <span class="field-key">FK</span>
+                        <span>utilisateur_source_id</span>
+                        <span class="field-type">VARCHAR(36)</span>
+                    </div>
+                    <div class="field">type_partage <span class="field-type">ENUM</span></div>
+                    <div class="field">destinataire <span class="field-type">VARCHAR(255)</span></div>
+                    <div class="field">date_partage <span class="field-type">TIMESTAMP</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
