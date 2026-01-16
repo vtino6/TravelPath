@@ -1,0 +1,260 @@
+@startuml Logique Métier Complète TravelPath
+!theme plain
+skinparam {
+    shadowing false
+    RoundCorner 5
+    Padding 10
+    ArrowColor #222222
+    BorderColor #222222
+    FontColor #222222
+}
+
+skinparam class {
+    BackgroundColor #DDDDFF
+    BorderColor #6666CC
+}
+
+skinparam interface {
+    BackgroundColor #AAFFCC
+    BorderColor #66CCAA
+}
+
+title Logique Métier Complète - TravelPath
+
+package "Génération de Routes" {
+    class RouteGeneratorService {
+        - placeRepository: PlaceRepository
+        - placesService: PlacesService
+        - weatherService: WeatherService
+        - openRouteServiceClient: OpenRouteServiceClient
+        --
+        + generateRoutes(request: RouteRequest): List<RouteResponse>
+        - generateRoute(places, request, type): RouteResponse
+        - selectPlacesByType(places, request, type): List<Place>
+        - deriveTargetNumberOfPlaces(request, type): int
+        - findClosestPlace(places, lat, lon): Place
+        - selectNextPlace(candidates, current, request, type, random): Place
+        - optimizeOrder(places, startLat, startLng): List<Place>
+        - filterByWeather(places, weather, sensitivities): List<Place>
+        - calculateDistance(from, to): double
+        - estimateTransportCost(places, mode): double
+        - calculateSegmentTransportCost(distance, mode): double
+        - getDistanceMatrix(places): double[][]
+        - findClosestToStart(places, lat, lon): int
+        - findNearestIndex(fromIndex, candidates, matrix): int
+        - isRouteValid(route, request): boolean
+        - calculateTotalDuration(places): int
+        - determineTimeSlot(index): TimeSlot
+        - estimateDuration(place): int
+    }
+    
+    note right of RouteGeneratorService
+        **Processus de génération:**
+        
+        1. Récupération initiale (2km par catégorie)
+        2. Filtre météo (retire lieux extérieurs)
+        3. Ajout lieux requis (obligatoires)
+        4. Détermination nombre cible:
+           - User input × multiplicateur type
+           - Limité par budget (90% lieux)
+        5. Sélection itérative:
+           - Premier: plus proche utilisateur
+           - Suivants: 1500m + budget restant
+           - Tri selon type (ECO/BAL/COM)
+           - Aléatoire top 3
+        6. Optimisation ordre (nearest neighbor)
+        7. Calcul transport (après sélection)
+        8. Validation budget total (×1.1)
+    end note
+}
+
+package "Sélection de Lieux" {
+    class PlacesService {
+        - yelpPlacesService: YelpPlacesService
+        - googlePlacesService: GooglePlacesService
+        - yelpEnabled: boolean
+        - googleEnabled: boolean
+        --
+        + searchPlaces(lat, lon, radius, categories): List<Place>
+        + searchNearbyEntities(lat, lon, radius, category): List<Place>
+        - searchPlacesByCategoryYelp(category, lat, lon, radius): List<Place>
+        - searchPlacesByCategoryGoogle(category, lat, lon, radius): List<Place>
+        - convertYelpToPlace(yelpBusiness): Place
+        - convertGoogleToPlace(googlePlace): Place
+        - convertYelpPriceToCost(price, city): double
+        - determineCategoryFromGoogleTypes(types): String
+        - getCityFromCoordinates(lat, lon): String
+        - getCityCostMultiplier(city): double
+        - removeDuplicates(places): List<Place>
+        - calculateVisitTime(category): int
+    }
+    
+    note right of PlacesService
+        **Conversion prix Yelp:**
+        - $ → 15€, $$ → 30€, $$$ → 60€, $$$$ → 100€
+        - Multiplicateur ville:
+          * Paris/London/NY: 1.5x
+          * Lyon/Marseille: 1.0x
+          * Autres: 0.7x
+        
+        **Catégories Google:**
+        - museum → CULTURE
+        - park → LEISURE
+        - tourist_attraction → DISCOVERY
+        - restaurant → RESTAURANT
+    end note
+}
+
+package "Calcul des Coûts" {
+    class CostCalculation {
+        + calculatePlaceCosts(places): double
+        + calculateTransportCost(places, mode): double
+        + calculateSegmentCost(distance, mode): double
+        + calculateFoodCost(places): double
+    }
+    
+    note right of CostCalculation
+        **Coûts par mode:**
+        - WALKING: 0€
+        - BICYCLE: 0€
+        - PUBLIC_TRANSPORT: 2.50€/segment (fixe)
+        - CAR: (distance × 0.10€) + 3€ parking
+        - MIXED: Sélection intelligente selon distance
+        
+        **Nourriture:**
+        - 5€ par lieu (estimé)
+    end note
+}
+
+package "Optimisation" {
+    class RouteOptimization {
+        + nearestNeighborAlgorithm(places, start): List<Place>
+        + buildDistanceMatrix(places): double[][]
+        + findNearestUnvisited(current, unvisited, matrix): Place
+    }
+    
+    note right of RouteOptimization
+        **Algorithme Nearest Neighbor:**
+        1. Trouver plus proche du départ
+        2. Pour chaque lieu restant:
+           - Trouver plus proche du lieu actuel
+           - L'ajouter à l'itinéraire
+        3. Complexité: O(n²)
+        
+        **Distance:**
+        - OpenRouteService (préféré)
+        - Haversine (fallback)
+    end note
+}
+
+package "Filtrage" {
+    class WeatherFiltering {
+        + filterByWeather(places, weather, sensitivities): List<Place>
+        + isWeatherSuitable(weather, cold, heat, humidity): boolean
+    }
+    
+    class BudgetFiltering {
+        + filterByBudget(places, maxBudget): List<Place>
+        + filterByRemainingBudget(candidates, remaining): List<Place>
+    }
+    
+    class DistanceFiltering {
+        + filterByDistance(candidates, current, radius): List<Place>
+    }
+    
+    note right of WeatherFiltering
+        **Logique météo:**
+        - Froid: temp < (15 - sensibilité × 2)
+        - Chaleur: temp > (25 + sensibilité × 2)
+        - Humidité: humidity > (70 + sensibilité × 5)
+        - Météo extrême: filtre si sensibilité ≥ 3
+    end note
+}
+
+package "Sélection par Type" {
+    class RouteTypeSelection {
+        + selectEconomic(candidates, current): Place
+        + selectBalanced(candidates, current): Place
+        + selectComfort(candidates, current): Place
+    }
+    
+    note right of RouteTypeSelection
+        **ECONOMIC:**
+        - Score = coût + (distance × 2)
+        - Priorité: moins cher + proche
+        
+        **BALANCED:**
+        - Score = distance
+        - Priorité: plus proche
+        
+        **COMFORT:**
+        - Score = -coût, puis distance
+        - Priorité: plus cher, puis proche
+    end note
+}
+
+package "Validation" {
+    class RouteValidation {
+        + isRouteValid(route, request): boolean
+        + validateBudget(route, maxBudget): boolean
+        + validatePlaces(route): boolean
+    }
+    
+    note right of RouteValidation
+        **Critères de validation:**
+        - Budget total ≤ maxBudget × 1.1 (10% tolérance)
+        - Au moins 1 lieu
+        - Routes dépassant contraintes: REJETÉES
+    end note
+}
+
+package "Persistance" {
+    class RouteService {
+        - routeRepository: RouteRepository
+        - stepRepository: StepRepository
+        - objectMapper: ObjectMapper
+        --
+        + saveRoute(response, userId): Route
+        + getSavedRoutes(userId): List<RouteResponse>
+        + deleteRoute(id, userId): void
+        + toggleFavorite(id, userId): void
+        - serializeSteps(steps): String
+        - deserializeSteps(json): List<StepResponse>
+        - convertToResponse(route): RouteResponse
+    }
+    
+    note right of RouteService
+        **Sérialisation:**
+        - Steps → JSON string
+        - Stocké dans Route.stepsJson
+        - Évite conflits Hibernate
+        - Désérialisation à la demande
+    end note
+}
+
+' Relations
+RouteGeneratorService --> PlacesService : utilise
+RouteGeneratorService --> WeatherFiltering : utilise
+RouteGeneratorService --> BudgetFiltering : utilise
+RouteGeneratorService --> DistanceFiltering : utilise
+RouteGeneratorService --> RouteTypeSelection : utilise
+RouteGeneratorService --> RouteOptimization : utilise
+RouteGeneratorService --> CostCalculation : utilise
+RouteGeneratorService --> RouteValidation : utilise
+
+PlacesService --> YelpPlacesService : appelle
+PlacesService --> GooglePlacesService : appelle
+
+RouteOptimization --> OpenRouteServiceClient : utilise
+
+RouteService --> RouteRepository : persiste
+
+note bottom of RouteGeneratorService
+    **Budget dégressif:**
+    - 90% budget alloué aux lieux
+    - 10% réservé pour transport
+    - Budget restant diminue après chaque sélection
+    - Arrêt si budget épuisé
+end note
+
+@enduml

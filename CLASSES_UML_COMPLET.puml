@@ -1,0 +1,709 @@
+@startuml Classes Complètes TravelPath
+!theme plain
+skinparam {
+    shadowing false
+    RoundCorner 5
+    Padding 10
+    ArrowColor #222222
+    BorderColor #222222
+    FontColor #222222
+}
+
+skinparam class {
+    BackgroundColor #DDDDFF
+    BorderColor #6666CC
+}
+
+skinparam interface {
+    BackgroundColor #AAFFCC
+    BorderColor #66CCAA
+}
+
+title Diagramme de Classes Complet - TravelPath
+
+package "Android App - UI Screens" {
+    class HomeScreen {
+        + searchCity()
+        + displayPhotos()
+        + navigateToPreferences()
+    }
+    
+    class PreferencesScreen {
+        + setLocation()
+        + setBudget()
+        + setNumberOfPlaces()
+        + setTransportationMode()
+        + setActivities()
+        + setWeatherSensitivity()
+    }
+    
+    class RouteSelectionScreen {
+        + displayRoutes()
+        + toggleLike()
+        + navigateToDetails()
+    }
+    
+    class RouteDetailScreen {
+        + displayRouteDetails()
+        + showMapView()
+        + showListView()
+        + startNavigation()
+        + shareRoute()
+    }
+    
+    class ActiveNavigationScreen {
+        + showCurrentStep()
+        + navigateToNext()
+        + navigateToPrevious()
+        + goBack()
+    }
+    
+    class SavedRoutesScreen {
+        + displayLikedRoutes()
+        + displayCachedRoutes()
+        + deleteRoute()
+        + toggleLike()
+    }
+    
+    class BrowsePlacesScreen {
+        + displayPlaces()
+        + markAsFavorite()
+        + markAsMandatory()
+    }
+}
+
+package "Android App - ViewModels" {
+    class PreferencesViewModel {
+        - selectedActivities: StateFlow<Set<PlaceCategory>>
+        - maxBudget: StateFlow<Float>
+        - numberOfPlaces: StateFlow<Int>
+        - selectedTransportationModes: StateFlow<Set<TransportationMode>>
+        - latitude: StateFlow<Double>
+        - longitude: StateFlow<Double>
+        - startingPointName: StateFlow<String>
+        - mandatoryPlaces: StateFlow<List<Place>>
+        --
+        + buildRouteRequest(): RouteRequest
+        + estimateCost(): CostEstimate
+        + toggleTransportationMode(mode)
+        + setNumberOfPlaces(count)
+        + setBudget(budget)
+    }
+    
+    class RouteSelectionViewModel {
+        - routes: StateFlow<List<Route>>
+        - startingPoint: StateFlow<Pair<Double, Double>?>
+        - startingPointName: StateFlow<String>
+        - selectedTransportationModesFromPreferences: StateFlow<Set<TransportationMode>>
+        --
+        + generateRoutes(request)
+        + toggleLike(routeId)
+    }
+    
+    class SavedRoutesViewModel {
+        - likedRoutes: StateFlow<List<Route>>
+        - cachedRoutes: StateFlow<List<Route>>
+        --
+        + loadLikedRoutes(userId)
+        + deleteRoute(routeId, userId)
+        + toggleLike(routeId, userId)
+    }
+    
+    class RouteDetailViewModel {
+        - route: StateFlow<Route?>
+        --
+        + loadRoute(routeId)
+    }
+    
+    class BrowsePlacesViewModel {
+        - places: StateFlow<List<Place>>
+        --
+        + searchPlaces(lat, lon, categories)
+    }
+    
+    class CitySearchViewModel {
+        - searchQuery: StateFlow<String>
+        - cities: StateFlow<List<String>>
+        - photos: StateFlow<List<Photo>>
+        --
+        + searchCities(query)
+        + loadCityPhotos(city)
+    }
+}
+
+package "Android App - Repositories" {
+    class RouteRepository {
+        - api: TravelPathApi
+        - database: AppDatabase
+        --
+        + generateRoutes(request): Flow<List<Route>>
+        + saveRoute(route, userId): Flow<Route?>
+        + getSavedRoutes(userId): Flow<List<Route>>
+        + saveRouteToRoom(route)
+        + getLikedRoutesFromRoom(): Flow<List<Route>>
+        + deleteRouteFromRoom(routeId)
+    }
+    
+    class PlaceRepository {
+        - api: TravelPathApi
+        - database: AppDatabase
+        --
+        + searchPlaces(lat, lon, radius, categories): Flow<List<Place>>
+        + getCachedPlaces(lat, lon): Flow<List<Place>>
+    }
+    
+    class SavedRouteRepository {
+        - database: AppDatabase
+        --
+        + getAllSavedRoutes(): Flow<List<SavedRoute>>
+        + insertSavedRoute(route)
+        + deleteSavedRoute(id)
+        + updateSavedRoute(route)
+    }
+    
+    class PhotoRepository {
+        - firestore: FirebaseFirestore
+        --
+        + searchCities(query): Flow<List<String>>
+        + getPhotosByCity(city): Flow<List<Photo>>
+        + getAllPhotos(): Flow<List<Photo>>
+    }
+}
+
+package "Android App - Data Models" {
+    class Route {
+        + id: String
+        + type: RouteType
+        + steps: List<RouteStep>
+        + totalCost: Double
+        + totalDuration: Int
+        + totalDistance: Double
+        + effortLevel: EffortLevel
+        + transportCost: Double
+    }
+    
+    class RouteStep {
+        + id: String
+        + order: Int
+        + place: Place
+        + cost: Double
+        + distanceFromPrevious: Double?
+    }
+    
+    class Place {
+        + id: String
+        + name: String
+        + latitude: Double
+        + longitude: Double
+        + address: String?
+        + category: String
+        + averageCost: Double
+        + description: String?
+        + photoUrls: List<String>
+        + visitTime: Int
+        + waitTime: Int
+    }
+    
+    class RouteRequest {
+        + latitude: Double
+        + longitude: Double
+        + activities: List<PlaceCategory>
+        + maxBudget: Double?
+        + numberOfPlaces: Int?
+        + transportationMode: List<String>
+        + coldSensitivity: Int
+        + heatSensitivity: Int
+        + humiditySensitivity: Int
+        + requiredPlaceIds: List<String>?
+    }
+    
+    class RouteResponse {
+        + id: String
+        + name: String
+        + routeType: RouteType
+        + totalBudget: Double
+        + totalDuration: Int
+        + transportationMode: String?
+        + city: String
+        + isFavorite: Boolean?
+        + steps: List<StepResponse>
+    }
+    
+    class StepResponse {
+        + id: String
+        + order: Int
+        + place: PlaceResponse
+        + distanceFromPrevious: Double?
+        + cost: Double
+    }
+    
+    class PlaceResponse {
+        + id: String
+        + name: String
+        + latitude: Double
+        + longitude: Double
+        + address: String
+        + category: String
+        + averageCost: Double
+    }
+    
+    class SavedRoute {
+        + id: Long
+        + route: Route
+        + savedAt: Date
+        + notes: String?
+        + isLiked: Boolean
+    }
+    
+    class CachedRoute {
+        + cacheKey: String
+        + routes: List<Route>
+        + cachedAt: Date
+    }
+    
+    class CachedPlace {
+        + id: String
+        + place: Place
+        + cachedAt: Date
+        + latitude: Double
+        + longitude: Double
+    }
+}
+
+package "Backend - Controllers" {
+    class RoutesController {
+        - routeGeneratorService: RouteGeneratorService
+        - routeService: RouteService
+        --
+        + POST /routes/generate(request): List<RouteResponse>
+        + POST /routes/save(response, userId): RouteResponse
+        + GET /routes/saved(userId): List<RouteResponse>
+        + GET /routes/{id}: RouteResponse
+        + DELETE /routes/{id}(userId): void
+        + POST /routes/{id}/favorite(userId): Map
+        + GET /routes/test(): Map
+    }
+    
+    class PlacesController {
+        - placesService: PlacesService
+        --
+        + GET /places/search(lat, lon, radius, categories): PlaceSearchResponse
+    }
+    
+    class UserController {
+        - userService: UserService
+        --
+        + POST /users/register(request): UserResponse
+        + POST /users/login(request): UserResponse
+    }
+    
+    class WeatherController {
+        - weatherService: WeatherService
+        --
+        + GET /weather/current(lat, lon): WeatherData
+    }
+}
+
+package "Backend - Services" {
+    class RouteGeneratorService {
+        - placeRepository: PlaceRepository
+        - placesService: PlacesService
+        - weatherService: WeatherService
+        - openRouteServiceClient: OpenRouteServiceClient
+        --
+        + generateRoutes(request): List<RouteResponse>
+        - generateRoute(places, request, type): RouteResponse
+        - selectPlacesByType(places, request, type): List<Place>
+        - deriveTargetNumberOfPlaces(request, type): int
+        - findClosestPlace(places, lat, lon): Place
+        - selectNextPlace(candidates, current, request, type, random): Place
+        - optimizeOrder(places, startLat, startLng): List<Place>
+        - filterByWeather(places, weather, sensitivities): List<Place>
+        - calculateDistance(from, to): double
+        - estimateTransportCost(places, mode): double
+        - calculateSegmentTransportCost(distance, mode): double
+        - getDistanceMatrix(places): double[][]
+        - findClosestToStart(places, lat, lon): int
+        - findNearestIndex(fromIndex, candidates, matrix): int
+        - isRouteValid(route, request): boolean
+        - calculateTotalDuration(places): int
+        - determineTimeSlot(index): TimeSlot
+        - estimateDuration(place): int
+    }
+    
+    class RouteService {
+        - routeRepository: RouteRepository
+        - stepRepository: StepRepository
+        - placeRepository: PlaceRepository
+        - userRepository: UserRepository
+        - entityManager: EntityManager
+        - objectMapper: ObjectMapper
+        --
+        + saveRoute(response, userId): Route
+        + getSavedRoutes(userId): List<RouteResponse>
+        + getRouteById(id): RouteResponse
+        + deleteRoute(id, userId): void
+        + toggleFavorite(id, userId): void
+        - convertToResponse(route): RouteResponse
+        - deserializeSteps(json): List<StepResponse>
+        - serializeSteps(steps): String
+    }
+    
+    class PlacesService {
+        - yelpPlacesService: YelpPlacesService
+        - googlePlacesService: GooglePlacesService
+        - yelpEnabled: boolean
+        - googleEnabled: boolean
+        --
+        + searchPlaces(lat, lon, radius, categories): List<Place>
+        + searchNearbyEntities(lat, lon, radius, category): List<Place>
+        - searchPlacesByCategoryYelp(category, lat, lon, radius): List<Place>
+        - searchPlacesByCategoryGoogle(category, lat, lon, radius): List<Place>
+        - convertYelpToPlace(yelpBusiness): Place
+        - convertGoogleToPlace(googlePlace): Place
+        - convertYelpPriceToCost(price, city): double
+        - determineCategoryFromGoogleTypes(types): String
+        - getCityFromCoordinates(lat, lon): String
+        - getCityCostMultiplier(city): double
+        - removeDuplicates(places): List<Place>
+        - calculateVisitTime(category): int
+    }
+    
+    class WeatherService {
+        - weatherApiClient: WeatherApiClient
+        --
+        + getCurrentWeather(lat, lon): WeatherData
+        + getForecast(lat, lon): List<WeatherData>
+        + isWeatherSuitable(weather, cold, heat, humidity): boolean
+    }
+    
+    class UserService {
+        - userRepository: UserRepository
+        --
+        + registerUser(request): UserResponse
+        + loginUser(request): UserResponse
+        + getUserById(id): User
+    }
+}
+
+package "Backend - External Services" {
+    class YelpPlacesService {
+        - apiKey: String
+        - clientId: String
+        - webClient: WebClient
+        --
+        + searchByCategory(category, lat, lon, radius): List<YelpBusiness>
+        + searchBusinesses(term, lat, lon, radius): List<YelpBusiness>
+        + getBusinessDetails(id): YelpBusiness
+    }
+    
+    class GooglePlacesService {
+        - apiKey: String
+        - webClient: WebClient
+        --
+        + searchNearby(lat, lon, types, radius): List<GooglePlace>
+        + getPlaceDetails(placeId): GooglePlace
+        + autocomplete(input, location): List<AutocompletePrediction>
+        + geocode(address): GeocodeResult
+    }
+    
+    class OpenRouteServiceClient {
+        - apiKey: String
+        - webClient: WebClient
+        --
+        + getDistanceMatrix(locations, profile): DistanceMatrixResponse
+        + getDirections(startLat, startLon, endLat, endLon, profile): DirectionsResponse
+    }
+    
+    class WeatherApiClient {
+        - apiKey: String
+        - webClient: WebClient
+        --
+        + getCurrentWeather(lat, lon): WeatherData
+        + getForecast(lat, lon): List<WeatherData>
+    }
+    
+    class OverpassClient {
+        - webClient: WebClient
+        --
+        + queryOverpass(query): JsonNode
+        + searchPlaces(lat, lon, radius, category): List<Place>
+    }
+}
+
+package "Backend - Models" {
+    class Route {
+        - id: String
+        - user: User
+        - userIdString: String
+        - name: String
+        - routeType: RouteType
+        - totalBudget: Double
+        - totalDuration: Integer
+        - transportationMode: TransportationMode
+        - city: String
+        - createdAt: LocalDateTime
+        - updatedAt: LocalDateTime
+        - isSaved: Boolean
+        - isFavorite: Boolean
+        - stepsJson: String
+        - steps: List<Step>
+        --
+        + @PrePersist onCreate()
+        + @PreUpdate onUpdate()
+    }
+    
+    class Step {
+        - id: String
+        - route: Route
+        - place: Place
+        - order: Integer
+        - timeSlot: TimeSlot
+        - estimatedDuration: Integer
+        - distanceFromPrevious: Double
+        - cost: Double
+        - notes: String
+    }
+    
+    class Place {
+        - id: String
+        - name: String
+        - latitude: Double
+        - longitude: Double
+        - address: String
+        - category: String
+        - averageCost: Double
+        - description: String
+        - visitTime: Integer
+        - waitTime: Integer
+    }
+    
+    class User {
+        - id: String
+        - name: String
+        - email: String
+        - password: String
+        - createdAt: LocalDateTime
+        - updatedAt: LocalDateTime
+        --
+        + @PrePersist onCreate()
+        + @PreUpdate onUpdate()
+    }
+}
+
+package "Backend - DTOs" {
+    class RouteRequest {
+        + latitude: Double
+        + longitude: Double
+        + activities: List<PlaceCategory>
+        + maxBudget: Double?
+        + numberOfPlaces: Integer?
+        + transportationMode: List<String>
+        + coldSensitivity: Integer
+        + heatSensitivity: Integer
+        + humiditySensitivity: Integer
+        + requiredPlaceIds: List<String>?
+    }
+    
+    class RouteResponse {
+        + id: String
+        + name: String
+        + routeType: RouteType
+        + totalBudget: Double
+        + totalDuration: Integer
+        + transportationMode: String?
+        + city: String
+        + isFavorite: Boolean?
+        + steps: List<StepResponse>
+    }
+    
+    class StepResponse {
+        + id: String
+        + order: Integer
+        + place: PlaceResponse
+        + distanceFromPrevious: Double?
+        + cost: Double
+    }
+    
+    class PlaceResponse {
+        + id: String
+        + name: String
+        + latitude: Double
+        + longitude: Double
+        + address: String
+        + category: String
+        + averageCost: Double
+    }
+    
+    class PlaceSearchResponse {
+        + places: List<PlaceResponse>
+    }
+    
+    class UserRequest {
+        + name: String
+        + email: String
+        + password: String
+    }
+    
+    class UserResponse {
+        + id: String
+        + name: String
+        + email: String
+    }
+    
+    class LoginRequest {
+        + email: String
+        + password: String
+    }
+}
+
+package "Backend - Repositories" {
+    interface RouteRepository {
+        + findById(id): Optional<Route>
+        + save(route): Route
+        + deleteById(id): void
+        + findByUserIdIsNull(): List<Route>
+        + findSavedRoutesByUser(userId): List<Route>
+    }
+    
+    interface PlaceRepository {
+        + findById(id): Optional<Place>
+        + save(place): Place
+        + findAll(): List<Place>
+    }
+    
+    interface StepRepository {
+        + findByRouteId(routeId): List<Step>
+        + save(step): Step
+        + deleteByRouteId(routeId): void
+    }
+    
+    interface UserRepository {
+        + findById(id): Optional<User>
+        + findByEmail(email): Optional<User>
+        + save(user): User
+    }
+}
+
+package "Enums" {
+    enum RouteType {
+        ECONOMIC
+        BALANCED
+        COMFORT
+    }
+    
+    enum TransportationMode {
+        WALKING
+        BICYCLE
+        PUBLIC_TRANSPORT
+        CAR
+        MIXED
+    }
+    
+    enum PlaceCategory {
+        RESTAURANT
+        CULTURE
+        LEISURE
+        DISCOVERY
+    }
+    
+    enum TimeSlot {
+        MORNING
+        AFTERNOON
+        EVENING
+    }
+    
+    enum EffortLevel {
+        EASY
+        MEDIUM
+        HARD
+    }
+}
+
+' Relations Android
+HomeScreen --> CitySearchViewModel
+PreferencesScreen --> PreferencesViewModel
+RouteSelectionScreen --> RouteSelectionViewModel
+RouteDetailScreen --> RouteDetailViewModel
+SavedRoutesScreen --> SavedRoutesViewModel
+BrowsePlacesScreen --> BrowsePlacesViewModel
+
+PreferencesViewModel --> RouteRepository
+RouteSelectionViewModel --> RouteRepository
+SavedRoutesViewModel --> RouteRepository
+BrowsePlacesViewModel --> PlaceRepository
+CitySearchViewModel --> PhotoRepository
+
+RouteRepository --> AppDatabase
+PlaceRepository --> AppDatabase
+SavedRouteRepository --> AppDatabase
+PhotoRepository --> Firebase
+
+' Relations Backend
+RoutesController --> RouteGeneratorService
+RoutesController --> RouteService
+PlacesController --> PlacesService
+UserController --> UserService
+WeatherController --> WeatherService
+
+RouteGeneratorService --> PlacesService
+RouteGeneratorService --> WeatherService
+RouteGeneratorService --> OpenRouteServiceClient
+RouteService --> RouteRepository
+RouteService --> StepRepository
+RouteService --> PlaceRepository
+RouteService --> UserRepository
+
+PlacesService --> YelpPlacesService
+PlacesService --> GooglePlacesService
+WeatherService --> WeatherApiClient
+
+RouteRepository --> Route
+StepRepository --> Step
+PlaceRepository --> Place
+UserRepository --> User
+
+Route "1" *-- "many" Step : contains
+Route "many" --> "1" User : belongs to
+Step "many" --> "1" Place : references
+
+' External API connections
+YelpPlacesService ..> "Yelp Fusion API" : HTTP
+GooglePlacesService ..> "Google Places API" : HTTP
+OpenRouteServiceClient ..> "OpenRouteService" : HTTP
+WeatherApiClient ..> "OpenWeatherMap" : HTTP
+OverpassClient ..> "OpenStreetMap Overpass" : HTTP
+PhotoRepository ..> "Firebase Firestore" : SDK
+
+note right of RouteGeneratorService
+    **Algorithme de génération:**
+    1. Récupérer lieux par catégorie (2km)
+    2. Filtrer par météo
+    3. Ajouter lieux requis
+    4. Déterminer nombre cible (user input × type)
+    5. Sélection itérative:
+       - Budget dégressif (90% lieux)
+       - Filtre distance (1500m)
+       - Sélection selon type
+    6. Optimiser ordre (nearest neighbor)
+    7. Calculer coûts transport
+    8. Valider contraintes
+end note
+
+note right of PlacesService
+    **Approche hybride:**
+    - Yelp pour restaurants (prix réels)
+    - Google Places pour autres
+    - Multiplicateur ville (Paris 1.5x)
+    - Cache Caffeine (24h)
+end note
+
+note right of RouteService
+    **Gestion des steps:**
+    - Stockage JSON dans stepsJson
+    - Évite conflits session Hibernate
+    - Désérialisation à la demande
+    - Synchronisation Room ↔ PostgreSQL
+end note
+
+@enduml

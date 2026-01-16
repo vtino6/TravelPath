@@ -1,0 +1,163 @@
+@startuml Schéma Base de Données Complet TravelPath
+!theme plain
+skinparam {
+    shadowing false
+    RoundCorner 5
+    Padding 10
+    ArrowColor #222222
+    BorderColor #222222
+    FontColor #222222
+}
+
+skinparam database {
+    BackgroundColor #FFE6CC
+    BorderColor #FF9900
+}
+
+title Schéma Complet de Base de Données - TravelPath
+
+database "PostgreSQL (Backend)" {
+    entity "users" {
+        * id : VARCHAR(36) <<PK>>
+        --
+        * name : VARCHAR(255)
+        * email : VARCHAR(255) <<UNIQUE>>
+        * password : VARCHAR(255) <<hashed>>
+        * created_at : TIMESTAMP
+        * updated_at : TIMESTAMP
+    }
+    
+    entity "routes" {
+        * id : VARCHAR(36) <<PK>>
+        --
+        user_id : VARCHAR(36) <<FK>>
+        user_id_string : VARCHAR(36)
+        * name : VARCHAR(255)
+        * route_type : VARCHAR(20) <<ENUM>>
+        * total_budget : DECIMAL(10,2)
+        * total_duration : INTEGER
+        * transportation_mode : VARCHAR(50) <<ENUM>>
+        city : VARCHAR(255)
+        * created_at : TIMESTAMP
+        * updated_at : TIMESTAMP
+        * is_saved : BOOLEAN
+        * is_favorite : BOOLEAN
+        steps_json : TEXT <<JSON>>
+    }
+    
+    entity "steps" {
+        * id : VARCHAR(36) <<PK>>
+        --
+        * route_id : VARCHAR(36) <<FK>>
+        * place_id : VARCHAR(36) <<FK>>
+        * step_order : INTEGER
+        * time_slot : VARCHAR(20) <<ENUM>>
+        * estimated_duration : INTEGER
+        distance_from_previous : DECIMAL(10,2)
+        * cost : DECIMAL(10,2)
+        notes : TEXT
+    }
+    
+    entity "places" {
+        * id : VARCHAR(36) <<PK>>
+        --
+        * name : VARCHAR(255)
+        * latitude : DECIMAL(10,8)
+        * longitude : DECIMAL(11,8)
+        address : VARCHAR(500)
+        * category : VARCHAR(50)
+        average_cost : DECIMAL(10,2)
+        description : TEXT
+        visit_time : INTEGER
+        wait_time : INTEGER
+        * created_at : TIMESTAMP
+    }
+    
+    users ||--o{ routes : "has many"
+    routes ||--o{ steps : "has many"
+    places ||--o{ steps : "referenced by"
+}
+
+database "Room SQLite (Android)" {
+    entity "saved_routes" {
+        * id : INTEGER <<PK, AUTO>>
+        --
+        route : Route <<embedded>>
+        saved_at : INTEGER <<TIMESTAMP>>
+        notes : TEXT
+        is_liked : INTEGER <<BOOLEAN>>
+    }
+    
+    entity "cached_routes" {
+        * cache_key : TEXT <<PK>>
+        --
+        routes : List<Route> <<embedded>>
+        cached_at : INTEGER <<TIMESTAMP>>
+    }
+    
+    entity "cached_places" {
+        * id : TEXT <<PK>>
+        --
+        place : Place <<embedded>>
+        cached_at : INTEGER <<TIMESTAMP>>
+        latitude : REAL
+        longitude : REAL
+    }
+}
+
+database "Firebase Firestore (Photos)" {
+    entity "photos" {
+        * id : String <<AUTO>>
+        --
+        * city : String
+        * photo_url : String
+        user_id : String
+        uploaded_at : Timestamp
+        place_name : String
+        place_category : String
+    }
+}
+
+note right of routes
+    **Champs importants:**
+    - steps_json: Contient tous les steps
+      sérialisés en JSON pour éviter
+      les conflits de session Hibernate
+    - transportation_mode: WALKING, BICYCLE,
+      PUBLIC_TRANSPORT, CAR, MIXED
+    - route_type: ECONOMIC, BALANCED, COMFORT
+    - is_favorite: Indique si la route est likée
+    - is_saved: Indique si la route est sauvegardée
+end note
+
+note right of saved_routes
+    **Synchronisation:**
+    - Sauvegarde locale pour accès offline
+    - Synchronisation avec backend PostgreSQL
+    - route: Objet Route complet (sérialisé)
+    - is_liked: État local du like
+end note
+
+note right of cached_routes
+    **Cache:**
+    - Clé: latitude_longitude_activities_budget
+    - Routes mises en cache après génération
+    - Réduit les appels API répétés
+end note
+
+note right of cached_places
+    **Cache:**
+    - Lieux mis en cache après récupération
+    - Utilisé pour éviter appels API répétés
+    - Index sur (latitude, longitude)
+end note
+
+note right of photos
+    **Intégration Firebase:**
+    - Photos partagées depuis TravelShare app
+    - Recherche par ville
+    - Upload par utilisateurs
+    - Accès via PhotoRepository
+end note
+
+@enduml
