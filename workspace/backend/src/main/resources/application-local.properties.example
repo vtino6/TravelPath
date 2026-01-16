@@ -1,0 +1,16 @@
+# Example local configuration file
+# Copy this file to application-local.properties and add your API keys
+# This file is gitignored and will not be committed
+
+# Google Places API Key (for accurate place photos)
+# Get from: https://console.cloud.google.com/google/maps-apis/credentials
+# Enable: Places API (New) in Google Cloud Console
+google.places.api.key=YOUR_GOOGLE_PLACES_API_KEY_HERE
+
+# Other API keys (if needed)
+# weather.api.key=YOUR_WEATHER_API_KEY
+# openrouteservice.api.key=YOUR_OPENROUTESERVICE_API_KEY
+
+
+
+
